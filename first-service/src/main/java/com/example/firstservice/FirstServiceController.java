@@ -18,6 +18,11 @@ public class FirstServiceController {
     @GetMapping("/message")
     public String message(@RequestHeader("first-request") String header) {
         log.info("* header: {}", header);
-        return "Hello World in First Service";
+        return "Hello World in First Service.";
+    }
+
+    @GetMapping("/check")
+    public String check() {
+        return "Hi, there. This is a message from First Service.";
     }
 }
