@@ -1,2 +1,6 @@
 encrypt:
-  key: abcdefghijklmnopqrstuvwxyz0123456789
+#  key: abcdefghijklmnopqrstuvwxyz0123456789
+  key-store:
+    location: file:./apiEncryptionKey.jks
+    password: ecommerce1234
+    alias: apiEncryptionKey
