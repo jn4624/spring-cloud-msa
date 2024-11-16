@@ -5,11 +5,16 @@ import com.example.userservice.jpa.UserEntity;
 import com.example.userservice.jpa.UserRepository;
 import com.example.userservice.vo.ResponseOrder;
 import org.modelmapper.ModelMapper;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,11 +25,16 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ModelMapper modelMapper;
+    private final RestTemplate restTemplate;
+    private final Environment environment;
 
-    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, ModelMapper modelMapper) {
+    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder,
+                           ModelMapper modelMapper, RestTemplate restTemplate, Environment environment) {
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.modelMapper = modelMapper;
+        this.restTemplate = restTemplate;
+        this.environment = environment;
     }
 
     @Override
@@ -40,6 +50,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserDto getUserDetailsByEmail(String email) {
+        UserEntity userEntity = userRepository.findByEmail(email);
+
+        if (userEntity == null) {
+            throw new UsernameNotFoundException("User not found - email: " + email);
+        }
+        return modelMapper.map(userEntity, UserDto.class);
+    }
+
+    @Override
     public UserDto createUser(UserDto userDto) {
         userDto.setUserId(UUID.randomUUID().toString());
 
@@ -48,6 +68,11 @@ public class UserServiceImpl implements UserService {
         userRepository.save(userEntity);
 
         return modelMapper.map(userEntity, UserDto.class);
+    }
+
+    @Override
+    public Iterable<UserEntity> getUserByAll() {
+        return userRepository.findAll();
     }
 
     @Override
@@ -60,24 +85,18 @@ public class UserServiceImpl implements UserService {
 
         UserDto userDto = modelMapper.map(userEntity, UserDto.class);
 
-        List<ResponseOrder> orders = new ArrayList<>();
+//        List<ResponseOrder> orders = new ArrayList<>();
+        // Using as rest template
+        String orderServiceURL = String.format(environment.getProperty("order_service.url"), userId);
+        ResponseEntity<List<ResponseOrder>> responseOrderList = restTemplate.exchange(orderServiceURL,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                });
+
+        List<ResponseOrder> orders = responseOrderList.getBody();
         userDto.setOrders(orders);
 
         return userDto;
-    }
-
-    @Override
-    public Iterable<UserEntity> getUserByAll() {
-        return userRepository.findAll();
-    }
-
-    @Override
-    public UserDto getUserDetailsByEmail(String email) {
-        UserEntity userEntity = userRepository.findByEmail(email);
-
-        if (userEntity == null) {
-            throw new UsernameNotFoundException("User not found - email: " + email);
-        }
-        return modelMapper.map(userEntity, UserDto.class);
     }
 }
