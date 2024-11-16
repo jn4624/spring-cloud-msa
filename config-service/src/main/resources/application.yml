@@ -9,4 +9,8 @@ spring:
     config:
       server:
         git:
-          uri: file:///Users/jinalim/git/spring-cloud-config-repo
+#          uri: file:///Users/jinalim/git/spring-cloud-config-repo
+          uri: https://github.com/jn4624/spring-cloud-config
+          # private repository
+          # username: [username]
+          # password: [password]
