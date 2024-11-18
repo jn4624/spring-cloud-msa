@@ -5,10 +5,8 @@ import com.example.userservice.dto.UserDto;
 import com.example.userservice.jpa.UserEntity;
 import com.example.userservice.jpa.UserRepository;
 import com.example.userservice.vo.ResponseOrder;
-import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.springframework.core.env.Environment;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -26,15 +24,14 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ModelMapper modelMapper;
 //    private final RestTemplate restTemplate;
-    private final Environment environment;
+//    private final Environment environment;
     private final OrderServiceClient orderServiceClient;
 
     public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder,
-                           ModelMapper modelMapper, Environment environment, OrderServiceClient orderServiceClient) {
+                           ModelMapper modelMapper, OrderServiceClient orderServiceClient) {
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.modelMapper = modelMapper;
-        this.environment = environment;
         this.orderServiceClient = orderServiceClient;
     }
 
@@ -100,13 +97,15 @@ public class UserServiceImpl implements UserService {
 
         // Using a feign client
         // Feign exception handling
-        List<ResponseOrder> orders = null;
-        try {
-            orders = orderServiceClient.getOrders(userId);
-        } catch (FeignException e) {
-            log.error("* {}", e.getMessage());
-        }
+//        List<ResponseOrder> orders = null;
+//        try {
+//            orders = orderServiceClient.getOrders(userId);
+//        } catch (FeignException e) {
+//            log.error("* {}", e.getMessage());
+//        }
 
+        // ErrorDecoder
+        List<ResponseOrder> orders = orderServiceClient.getOrders(userId);
         userDto.setOrders(orders);
 
         return userDto;
