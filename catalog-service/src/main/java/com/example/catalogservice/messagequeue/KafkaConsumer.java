@@ -21,7 +21,7 @@ public class KafkaConsumer {
         this.catalogRepository = catalogRepository;
     }
 
-    @KafkaListener(topics = "example-catalog-topic")
+    @KafkaListener(topics = "example-catalog-topic", groupId = "consumerGroupId")
     public void updateQty(String kafkaMessage) {
         log.info("* Kafka Message: {}", kafkaMessage);
 
