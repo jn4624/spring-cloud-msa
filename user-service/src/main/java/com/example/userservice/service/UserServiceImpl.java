@@ -7,6 +7,8 @@ import com.example.userservice.jpa.UserRepository;
 import com.example.userservice.vo.ResponseOrder;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -26,13 +28,16 @@ public class UserServiceImpl implements UserService {
 //    private final RestTemplate restTemplate;
 //    private final Environment environment;
     private final OrderServiceClient orderServiceClient;
+    private final CircuitBreakerFactory circuitBreakerFactory;
 
     public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder,
-                           ModelMapper modelMapper, OrderServiceClient orderServiceClient) {
+                           ModelMapper modelMapper, OrderServiceClient orderServiceClient,
+                           CircuitBreakerFactory circuitBreakerFactory) {
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.modelMapper = modelMapper;
         this.orderServiceClient = orderServiceClient;
+        this.circuitBreakerFactory = circuitBreakerFactory;
     }
 
     @Override
@@ -105,9 +110,13 @@ public class UserServiceImpl implements UserService {
 //        }
 
         // ErrorDecoder
-        List<ResponseOrder> orders = orderServiceClient.getOrders(userId);
-        userDto.setOrders(orders);
+//        List<ResponseOrder> orders = orderServiceClient.getOrders(userId);
 
+        // CircuitBreaker
+        CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitBreaker");
+        List<ResponseOrder> orders = circuitBreaker.run(() -> orderServiceClient.getOrders(userId), throwable -> new ArrayList<>());
+
+        userDto.setOrders(orders);
         return userDto;
     }
 }
