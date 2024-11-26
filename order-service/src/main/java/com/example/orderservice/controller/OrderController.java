@@ -7,6 +7,7 @@ import com.example.orderservice.messagequeue.OrderProducer;
 import com.example.orderservice.service.OrderService;
 import com.example.orderservice.vo.RequestOrder;
 import com.example.orderservice.vo.ResponseOrder;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/order-service")
+@Slf4j
 public class OrderController {
     private final Environment environment;
     private final OrderService orderService;
@@ -43,6 +45,7 @@ public class OrderController {
     @PostMapping("/{userId}/orders")
     public ResponseEntity<ResponseOrder> createOrder(@PathVariable(name = "userId") String userId,
                                                      @RequestBody RequestOrder requestOrder) {
+        log.info("* Before add orders data");
         OrderDto orderDto = modelMapper.map(requestOrder, OrderDto.class);
         orderDto.setUserId(userId);
         // jpa
@@ -59,17 +62,21 @@ public class OrderController {
         orderProducer.send("orders", orderDto);
 
         ResponseOrder result = modelMapper.map(orderDto, ResponseOrder.class);
+        log.info("* After added orders data");
+
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @GetMapping("/{userId}/orders")
     public ResponseEntity<List<ResponseOrder>> getOrder(@PathVariable(name = "userId") String userId) {
+        log.info("* Before retrieve orders data");
         Iterable<OrderEntity> orderList = orderService.getOrdersByUserId(userId);
 
         List<ResponseOrder> results = new ArrayList<>();
         orderList.forEach(o -> {
             results.add(modelMapper.map(o, ResponseOrder.class));
         });
+        log.info("* After retrieved orders data");
 
         return ResponseEntity.status(HttpStatus.OK).body(results);
     }
