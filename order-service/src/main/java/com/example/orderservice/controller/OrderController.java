@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/order-service")
@@ -49,19 +48,19 @@ public class OrderController {
         OrderDto orderDto = modelMapper.map(requestOrder, OrderDto.class);
         orderDto.setUserId(userId);
         // jpa
-//        OrderDto createdOrder = orderService.createOrder(orderDto);
-//        ResponseOrder result = modelMapper.map(createdOrder, ResponseOrder.class);
+        OrderDto createdOrder = orderService.createOrder(orderDto);
+        ResponseOrder result = modelMapper.map(createdOrder, ResponseOrder.class);
 
         // kafka
-        orderDto.setOrderId(UUID.randomUUID().toString());
-        orderDto.setTotalPrice(requestOrder.getUnitPrice() * requestOrder.getQty());
+//        orderDto.setOrderId(UUID.randomUUID().toString());
+//        orderDto.setTotalPrice(requestOrder.getUnitPrice() * requestOrder.getQty());
 
         // send this order to the kafka
         kafkaProducer.send("example-catalog-topic", orderDto);
         // send this order to the kafka sink connect
-        orderProducer.send("orders", orderDto);
+//        orderProducer.send("orders", orderDto);
 
-        ResponseOrder result = modelMapper.map(orderDto, ResponseOrder.class);
+//        ResponseOrder result = modelMapper.map(orderDto, ResponseOrder.class);
         log.info("* After added orders data");
 
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
